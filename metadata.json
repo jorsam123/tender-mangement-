@@ -1,0 +1,6 @@
+{
+  "name": "TenderPulse - 2Merkato Tender & Bid Management Platform",
+  "description": "Enterprise tender discovery, bid lifecycle tracking, CPO bid bond management, and compliance pipeline for Ethiopian public procurement tenders sourced from 2Merkato.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
