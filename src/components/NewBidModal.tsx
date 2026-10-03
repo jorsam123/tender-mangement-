@@ -89,32 +89,36 @@ export const NewBidModal: React.FC<NewBidModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-neutral-950/60 backdrop-blur-xs">
-      <div className="bg-white border border-neutral-200 rounded-xl shadow-2xl w-full max-w-xl overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-neutral-100 bg-neutral-50/60">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 bg-neutral-950/60 backdrop-blur-xs">
+      <div className="bg-white border-t sm:border border-neutral-200 rounded-t-2xl sm:rounded-xl shadow-2xl w-full max-w-xl max-h-[94vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Mobile handle indicator */}
+        <div className="sm:hidden w-10 h-1 bg-neutral-300 rounded-full mx-auto mt-2 -mb-1 shrink-0"></div>
+
+        <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-neutral-100 bg-neutral-50/60 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-neutral-900 text-white rounded-md">
+            <div className="p-2 bg-neutral-900 text-white rounded-lg">
               <BookmarkPlus className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-neutral-900">
+              <h3 className="text-xs sm:text-sm font-bold text-neutral-900">
                 Track New Procurement Opportunity
               </h3>
-              <p className="text-xs text-neutral-500">
+              <p className="text-[11px] text-neutral-500">
                 Register a tender into the pipeline for CPO & compliance tracking
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 text-neutral-400 hover:text-neutral-700 rounded-md transition-colors"
+            className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center text-neutral-400 hover:text-neutral-700 rounded-lg hover:bg-neutral-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
           <div>
             <label className="text-xs font-medium text-neutral-700 block mb-1">
               Tender Title (English) *
@@ -264,13 +268,13 @@ export const NewBidModal: React.FC<NewBidModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 rounded-md transition-colors"
+              className="flex-1 sm:flex-initial px-4 py-2 min-h-[42px] sm:min-h-[38px] text-xs font-medium text-neutral-700 bg-white sm:bg-transparent border sm:border-0 border-neutral-200 rounded-lg hover:text-neutral-950 transition-colors text-center"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 rounded-md transition-colors shadow-xs"
+              className="flex-1 sm:flex-initial px-5 py-2 min-h-[42px] sm:min-h-[38px] text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 rounded-lg transition-colors shadow-xs text-center"
             >
               Add to Bid Pipeline
             </button>

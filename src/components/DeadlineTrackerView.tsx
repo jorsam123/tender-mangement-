@@ -223,43 +223,43 @@ export const DeadlineTrackerView: React.FC<DeadlineTrackerViewProps> = ({
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-md border border-neutral-200 text-xs self-start sm:self-auto">
+          <div className="flex items-center gap-1.5 p-1 bg-neutral-100 rounded-lg border border-neutral-200 text-xs overflow-x-auto scrollbar-none w-full sm:w-auto">
             <button
               onClick={() => setFilterMode('pending')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 min-h-[34px] rounded-md text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
                 filterMode === 'pending'
                   ? 'bg-white text-neutral-900 shadow-xs font-semibold'
-                  : 'text-neutral-600 hover:text-neutral-950'
+                  : 'text-neutral-600 hover:text-neutral-950 active:bg-neutral-200'
               }`}
             >
-              Pending Submission ({bids.filter((b) => !b.actualSubmissionDate && b.stage !== 'submitted' && b.stage !== 'evaluation' && b.stage !== 'awarded').length})
+              Pending ({bids.filter((b) => !b.actualSubmissionDate && b.stage !== 'submitted' && b.stage !== 'evaluation' && b.stage !== 'awarded').length})
             </button>
             <button
               onClick={() => setFilterMode('urgent')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 min-h-[34px] rounded-md text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
                 filterMode === 'urgent'
                   ? 'bg-white text-rose-700 shadow-xs font-semibold'
-                  : 'text-neutral-600 hover:text-neutral-950'
+                  : 'text-neutral-600 hover:text-neutral-950 active:bg-neutral-200'
               }`}
             >
               Urgent (&lt; 96h)
             </button>
             <button
               onClick={() => setFilterMode('submitted')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 min-h-[34px] rounded-md text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
                 filterMode === 'submitted'
                   ? 'bg-white text-emerald-800 shadow-xs font-semibold'
-                  : 'text-neutral-600 hover:text-neutral-950'
+                  : 'text-neutral-600 hover:text-neutral-950 active:bg-neutral-200'
               }`}
             >
               Submitted Bids
             </button>
             <button
               onClick={() => setFilterMode('all')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 min-h-[34px] rounded-md text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
                 filterMode === 'all'
                   ? 'bg-white text-neutral-900 shadow-xs font-semibold'
-                  : 'text-neutral-600 hover:text-neutral-950'
+                  : 'text-neutral-600 hover:text-neutral-950 active:bg-neutral-200'
               }`}
             >
               All ({bids.length})

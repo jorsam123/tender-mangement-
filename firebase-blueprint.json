@@ -1,0 +1,210 @@
+{
+  "entities": {
+    "MerkatoTender": {
+      "title": "MerkatoTender",
+      "description": "Procurement tender notice sourced from 2Merkato or government gazette",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "sourceId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 500 },
+        "titleAmharic": { "type": "string", "maxLength": 500 },
+        "organization": { "type": "string", "maxLength": 300 },
+        "organizationAmharic": { "type": "string", "maxLength": 300 },
+        "category": { "type": "string", "maxLength": 200 },
+        "categoryId": { "type": "string", "maxLength": 100 },
+        "procurementType": { "type": "string", "enum": ["NCB", "ICB", "RFQ", "EOI"] },
+        "region": { "type": "string", "maxLength": 100 },
+        "sourceMedia": { "type": "string", "maxLength": 200 },
+        "publishedAt": { "type": "string", "maxLength": 50 },
+        "closingDate": { "type": "string", "maxLength": 50 },
+        "openingDate": { "type": "string", "maxLength": 50 },
+        "bidBondAmountETB": { "type": "number" },
+        "bidBondType": { "type": "string", "enum": ["CPO", "Bank Guarantee", "Exempt"] },
+        "documentFeeETB": { "type": "number" },
+        "estimatedContractValueETB": { "type": "number" },
+        "isOpen": { "type": "boolean" },
+        "sourceUrl": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["id", "title", "organization", "category", "closingDate"]
+    },
+    "TrackedBid": {
+      "title": "TrackedBid",
+      "description": "A tracked procurement tender moving through the bidding qualification and submission pipeline",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "internalRefNo": { "type": "string", "maxLength": 100 },
+        "title": { "type": "string", "maxLength": 500 },
+        "organization": { "type": "string", "maxLength": 300 },
+        "stage": { 
+          "type": "string", 
+          "enum": ["lead", "qualified", "doc_bought", "bid_prep", "approved", "submitted", "evaluation", "awarded", "lost"] 
+        },
+        "category": { "type": "string", "maxLength": 200 },
+        "procurementType": { "type": "string", "enum": ["NCB", "ICB", "RFQ", "EOI"] },
+        "region": { "type": "string", "maxLength": 100 },
+        "closingDate": { "type": "string", "maxLength": 50 },
+        "openingDate": { "type": "string", "maxLength": 50 },
+        "bidBondAmountETB": { "type": "number" },
+        "bidBondType": { "type": "string", "enum": ["CPO", "Bank Guarantee", "Exempt"] },
+        "documentFeeETB": { "type": "number" },
+        "estimatedContractValueETB": { "type": "number" },
+        "ourBidAmountETB": { "type": "number" },
+        "targetMarginPercent": { "type": "number" },
+        "cpoBank": { "type": "string", "maxLength": 200 },
+        "cpoNumber": { "type": "string", "maxLength": 100 },
+        "cpoStatus": { "type": "string", "enum": ["Required", "Drafted", "Issued", "Submitted", "Released"] },
+        "notes": { "type": "string", "maxLength": 5000 },
+        "urgent": { "type": "boolean" },
+        "submissionTargetDate": { "type": "string", "maxLength": 50 },
+        "submissionLocation": { "type": "string", "maxLength": 300 },
+        "submissionMethod": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "ownerId", "title", "organization", "stage"]
+    },
+    "CompanyProfile": {
+      "title": "CompanyProfile",
+      "description": "Corporate profile and statutory licensing credentials",
+      "type": "object",
+      "properties": {
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "companyName": { "type": "string", "maxLength": 200 },
+        "companyNameAmharic": { "type": "string", "maxLength": 200 },
+        "tradeLicenseNumber": { "type": "string", "maxLength": 100 },
+        "tradeLicenseValidUntil": { "type": "string", "maxLength": 50 },
+        "tinNumber": { "type": "string", "maxLength": 50 },
+        "vatNumber": { "type": "string", "maxLength": 50 },
+        "fppaRegistrationNumber": { "type": "string", "maxLength": 100 },
+        "businessAddress": { "type": "string", "maxLength": 300 },
+        "city": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 100 },
+        "website": { "type": "string", "maxLength": 200 },
+        "authorizedSignatoryName": { "type": "string", "maxLength": 150 },
+        "authorizedSignatoryTitle": { "type": "string", "maxLength": 150 },
+        "establishedYear": { "type": "number" }
+      },
+      "required": ["ownerId", "companyName", "tinNumber"]
+    },
+    "UploadedDocument": {
+      "title": "UploadedDocument",
+      "description": "Verified legal license, certificate, or qualification document metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "category": { "type": "string", "enum": ["license", "personnel", "experience", "audit", "technical_offer", "other"] },
+        "title": { "type": "string", "maxLength": 200 },
+        "fileName": { "type": "string", "maxLength": 255 },
+        "fileSize": { "type": "string", "maxLength": 50 },
+        "fileType": { "type": "string", "maxLength": 50 },
+        "uploadedAt": { "type": "string", "maxLength": 50 },
+        "referenceNumber": { "type": "string", "maxLength": 100 },
+        "expiryDate": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["valid", "expiring_soon", "expired"] }
+      },
+      "required": ["id", "ownerId", "category", "title", "fileName"]
+    },
+    "KeyPersonnel": {
+      "title": "KeyPersonnel",
+      "description": "Expert personnel roster and credential metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "maxLength": 150 },
+        "qualification": { "type": "string", "maxLength": 200 },
+        "yearsOfExperience": { "type": "number" },
+        "licenseNumber": { "type": "string", "maxLength": 100 },
+        "assignedProjectRole": { "type": "string", "maxLength": 150 }
+      },
+      "required": ["id", "ownerId", "fullName", "role"]
+    },
+    "PastExperience": {
+      "title": "PastExperience",
+      "description": "Prior contract delivery and client certification history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "projectTitle": { "type": "string", "maxLength": 300 },
+        "clientOrganization": { "type": "string", "maxLength": 300 },
+        "contractValueETB": { "type": "number" },
+        "yearCompleted": { "type": "number" },
+        "sector": { "type": "string", "maxLength": 150 },
+        "scopeSummary": { "type": "string", "maxLength": 2000 }
+      },
+      "required": ["id", "ownerId", "projectTitle", "clientOrganization"]
+    },
+    "AuditReport": {
+      "title": "AuditReport",
+      "description": "Financial audit summary report",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "fiscalYear": { "type": "string", "maxLength": 100 },
+        "auditingFirm": { "type": "string", "maxLength": 200 },
+        "annualTurnoverETB": { "type": "number" },
+        "netWorthETB": { "type": "number" },
+        "auditOpinion": { "type": "string", "enum": ["Unqualified (Clean Opinion)", "Qualified", "Adverse"] }
+      },
+      "required": ["id", "ownerId", "fiscalYear", "auditingFirm"]
+    },
+    "TechnicalOfferItem": {
+      "title": "TechnicalOfferItem",
+      "description": "Standard technical specification item offering for tender matrices",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "itemNumber": { "type": "number" },
+        "description": { "type": "string", "maxLength": 1000 },
+        "offeredBrandModel": { "type": "string", "maxLength": 200 },
+        "countryOfOrigin": { "type": "string", "maxLength": 100 },
+        "specCompliance": { "type": "string", "enum": ["Full Compliance", "Exceeds Specification"] },
+        "warrantyMonths": { "type": "number" },
+        "deliveryTimelineWeeks": { "type": "number" }
+      },
+      "required": ["id", "ownerId", "description", "offeredBrandModel"]
+    }
+  },
+  "firestore": {
+    "/tenders/{tenderId}": {
+      "schema": "MerkatoTender",
+      "description": "Public tender catalog with Ethiopian procurement notices"
+    },
+    "/users/{userId}/trackedBids/{bidId}": {
+      "schema": "TrackedBid",
+      "description": "Bids tracked in qualification and submission pipeline by the authenticated user"
+    },
+    "/users/{userId}/companyProfile/{profileId}": {
+      "schema": "CompanyProfile",
+      "description": "Company registration, tax, and legal profile data"
+    },
+    "/users/{userId}/documents/{documentId}": {
+      "schema": "UploadedDocument",
+      "description": "Legal licenses, tax certificates, and compliance documents"
+    },
+    "/users/{userId}/personnel/{personnelId}": {
+      "schema": "KeyPersonnel",
+      "description": "CVs and professional qualifications of key personnel"
+    },
+    "/users/{userId}/experiences/{experienceId}": {
+      "schema": "PastExperience",
+      "description": "Past contract performance and completion certificates"
+    },
+    "/users/{userId}/auditReports/{auditId}": {
+      "schema": "AuditReport",
+      "description": "Annual financial turnover and audit opinion records"
+    },
+    "/users/{userId}/technicalOffers/{offerId}": {
+      "schema": "TechnicalOfferItem",
+      "description": "Catalog of technical specifications and warranties"
+    }
+  }
+}

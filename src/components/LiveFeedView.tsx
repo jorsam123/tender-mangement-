@@ -17,6 +17,7 @@ import {
   Eye,
   LayoutGrid,
   List,
+  X,
 } from 'lucide-react';
 import { MerkatoTender, TrackedBid } from '../types/tender';
 import { formatETB, calculateDaysRemaining, formatDate, STAGE_META } from '../utils/formatters';
@@ -49,6 +50,12 @@ export const LiveFeedView: React.FC<LiveFeedViewProps> = ({
   const [selectedRegion, setSelectedRegion] = useState('all');
   const [selectedProcType, setSelectedProcType] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const activeFiltersCount =
+    (selectedCategory !== 'all' ? 1 : 0) +
+    (selectedRegion !== 'all' ? 1 : 0) +
+    (selectedProcType !== 'all' ? 1 : 0);
 
   const categoriesList = [
     { id: 'all', label: 'All Categories' },
@@ -102,22 +109,52 @@ export const LiveFeedView: React.FC<LiveFeedViewProps> = ({
   return (
     <div className="space-y-4">
       {/* Control Bar */}
-      <div className="bg-white border border-neutral-200 rounded-lg p-3 sm:p-4 shadow-xs space-y-3">
-        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-          {/* Search box */}
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search tenders by keyword, entity, category, or Amharic title..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-neutral-50 border border-neutral-200 rounded-md focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
-            />
+      <div className="bg-white border border-neutral-200 rounded-xl p-3 sm:p-4 shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row gap-2.5 sm:gap-3 items-stretch md:items-center justify-between">
+          {/* Search box & Mobile filter trigger */}
+          <div className="flex items-center gap-2 flex-1">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search tenders, entities or Amharic..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900 focus:bg-white transition-all"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-neutral-400 hover:text-neutral-700"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Filter Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+              className={`md:hidden flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors min-h-[38px] shrink-0 ${
+                showMobileFilters || activeFiltersCount > 0
+                  ? 'bg-neutral-900 text-white border-neutral-900'
+                  : 'bg-neutral-50 text-neutral-700 border-neutral-200 active:bg-neutral-100'
+              }`}
+            >
+              <Filter className="w-3.5 h-3.5" />
+              <span>Filters</span>
+              {activeFiltersCount > 0 && (
+                <span className="bg-emerald-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* Region and Type Filters */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Desktop Region and Type Filters */}
+          <div className="hidden md:flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-md border border-neutral-200 text-xs">
               <span className="px-2 text-neutral-500 font-medium text-[11px]">Region:</span>
               {regions.map((reg) => (
@@ -193,8 +230,62 @@ export const LiveFeedView: React.FC<LiveFeedViewProps> = ({
           </div>
         </div>
 
+        {/* Collapsible Mobile Filter Drawer */}
+        {showMobileFilters && (
+          <div className="md:hidden pt-3 border-t border-neutral-100 space-y-2.5 bg-neutral-50/80 p-3 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-neutral-800">Filter Tenders</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedRegion('all');
+                  setSelectedProcType('all');
+                  setSelectedCategory('all');
+                }}
+                className="text-[11px] text-neutral-500 hover:text-neutral-900 underline"
+              >
+                Reset all
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <label className="text-[10px] font-medium uppercase text-neutral-500 block mb-1">
+                  Region
+                </label>
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="w-full text-xs bg-white border border-neutral-200 rounded-md p-2 text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                >
+                  {regions.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-medium uppercase text-neutral-500 block mb-1">
+                  Procurement Type
+                </label>
+                <select
+                  value={selectedProcType}
+                  onChange={(e) => setSelectedProcType(e.target.value)}
+                  className="w-full text-xs bg-white border border-neutral-200 rounded-md p-2 text-neutral-800 focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                >
+                  <option value="all">All Types</option>
+                  <option value="NCB">National (NCB)</option>
+                  <option value="ICB">International (ICB)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Category Pills Filter */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 text-xs no-scrollbar border-t border-neutral-100">
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 text-xs scrollbar-none border-t border-neutral-100">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 shrink-0 mr-1 flex items-center gap-1">
             <Layers className="w-3.5 h-3.5" />
             Field:
@@ -203,10 +294,10 @@ export const LiveFeedView: React.FC<LiveFeedViewProps> = ({
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
+              className={`px-3 py-1.5 min-h-[32px] rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
                 selectedCategory === cat.id
-                  ? 'bg-neutral-900 text-white shadow-xs'
-                  : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200'
+                  ? 'bg-neutral-900 text-white shadow-xs font-semibold'
+                  : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200 active:bg-neutral-300'
               }`}
             >
               {cat.label}
@@ -240,7 +331,122 @@ export const LiveFeedView: React.FC<LiveFeedViewProps> = ({
             Clear Filters
           </button>
         </div>
-      ) : viewMode === 'table' ? (
+      ) : (
+        <>
+          {/* Mobile Card List (Dedicated for phones & small viewports) */}
+          <div className="md:hidden space-y-3">
+            {filteredTenders.map((tender) => {
+              const tracked = getTrackedInfo(tender.id);
+              const deadline = calculateDaysRemaining(tender.closingDate);
+
+              return (
+                <div
+                  key={`mobile-${tender.id}`}
+                  onClick={() => onInspectTender(tender)}
+                  className="bg-white border border-neutral-200/90 rounded-xl p-3.5 shadow-xs active:bg-neutral-50/80 transition-all cursor-pointer"
+                >
+                  {/* Entity Header */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {tender.logo ? (
+                        <img
+                          src={tender.logo}
+                          alt={tender.organization}
+                          referrerPolicy="no-referrer"
+                          className="w-8 h-8 object-contain rounded border border-neutral-200 bg-white p-0.5 shrink-0"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-700 font-bold text-xs shrink-0">
+                          {tender.organization.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-neutral-900 truncate">
+                          {tender.organization}
+                        </div>
+                        <div className="text-[11px] text-neutral-500 flex items-center gap-1.5 mt-0.5">
+                          <span className="font-mono font-medium text-neutral-800">{tender.procurementType}</span>
+                          <span>·</span>
+                          <span>{tender.region}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {tracked && (
+                      <span className="text-[10px] font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
+                        In Pipeline
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-sm font-semibold text-neutral-950 mt-2.5 line-clamp-2 leading-snug">
+                    {tender.title}
+                  </h3>
+                  {tender.titleAmharic && tender.titleAmharic !== tender.title && (
+                    <p className="text-xs text-neutral-500 font-amharic line-clamp-1 mt-0.5">
+                      {tender.titleAmharic}
+                    </p>
+                  )}
+
+                  {/* 2-column Financial Data Strip */}
+                  <div className="mt-2.5 p-2.5 bg-neutral-50/90 rounded-lg border border-neutral-100 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <div className="text-[10px] uppercase font-medium text-neutral-400">Est. Value</div>
+                      <div className="font-mono font-bold text-neutral-900 tabular-nums">
+                        {formatETB(tender.estimatedContractValueETB)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase font-medium text-neutral-400">Bid Bond (CPO)</div>
+                      <div className="font-mono font-bold text-amber-700 tabular-nums">
+                        {formatETB(tender.bidBondAmountETB)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer & Thumb-Friendly Actions */}
+                  <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 text-[11px] text-neutral-500">
+                      <Clock className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span className={deadline.urgent ? 'text-rose-600 font-semibold' : ''}>
+                        {deadline.text}
+                      </span>
+                    </div>
+
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {tracked ? (
+                        <button
+                          type="button"
+                          onClick={() => onInspectTender(tender)}
+                          className="px-3 py-1.5 min-h-[38px] text-xs font-medium text-neutral-700 bg-neutral-100 active:bg-neutral-200 rounded-lg transition-colors flex items-center gap-1"
+                        >
+                          <span>Details</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onTrackTender(tender)}
+                          className="px-3.5 py-1.5 min-h-[38px] text-xs font-semibold text-white bg-neutral-900 active:bg-neutral-800 rounded-lg transition-colors flex items-center gap-1.5 shadow-xs"
+                        >
+                          <BookmarkPlus className="w-3.5 h-3.5" />
+                          <span>Track Tender</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table / Grid View */}
+          <div className="hidden md:block">
+            {viewMode === 'table' ? (
         /* High-Density Data Grid View */
         <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
@@ -500,32 +706,35 @@ export const LiveFeedView: React.FC<LiveFeedViewProps> = ({
           })}
         </div>
       )}
+          </div>
+        </>
+      )}
 
       {/* Pagination Footer */}
-      <div className="flex items-center justify-between bg-white border border-neutral-200 rounded-lg p-3 text-xs">
-        <div className="text-neutral-500">
+      <div className="flex flex-col sm:flex-row items-center justify-between bg-white border border-neutral-200 rounded-xl p-3 sm:p-4 text-xs gap-3">
+        <div className="text-neutral-500 text-center sm:text-left">
           Showing <span className="font-mono font-medium text-neutral-800">{filteredTenders.length}</span> live tenders
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
           <button
             onClick={() => onPageChange(Math.max(1, currentPage - 1))}
             disabled={currentPage <= 1 || isLoading}
-            className="px-2.5 py-1 border border-neutral-200 rounded text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 transition-colors flex items-center gap-1"
+            className="flex-1 sm:flex-initial px-3.5 py-2 min-h-[40px] border border-neutral-200 rounded-lg text-neutral-700 bg-neutral-50 hover:bg-neutral-100 disabled:opacity-40 transition-colors flex items-center justify-center gap-1.5 active:bg-neutral-200 font-medium"
           >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            Previous
+            <ChevronLeft className="w-4 h-4" />
+            <span>Prev</span>
           </button>
-          <span className="font-mono font-medium px-2 text-neutral-900">
+          <span className="font-mono font-semibold px-3 py-2 text-neutral-900 text-center">
             Page {currentPage}
           </span>
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={isLoading}
-            className="px-2.5 py-1 border border-neutral-200 rounded text-neutral-600 hover:bg-neutral-50 disabled:opacity-40 transition-colors flex items-center gap-1"
+            className="flex-1 sm:flex-initial px-3.5 py-2 min-h-[40px] border border-neutral-200 rounded-lg text-neutral-700 bg-neutral-50 hover:bg-neutral-100 disabled:opacity-40 transition-colors flex items-center justify-center gap-1.5 active:bg-neutral-200 font-medium"
           >
-            Next
-            <ChevronRight className="w-3.5 h-3.5" />
+            <span>Next</span>
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>

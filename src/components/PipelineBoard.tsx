@@ -54,6 +54,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
   const [viewType, setViewType] = useState<'kanban' | 'table'>('kanban');
   const [filterAssignee, setFilterAssignee] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [mobileSelectedStage, setMobileSelectedStage] = useState<TenderStage | 'all'>('lead');
 
   const filteredBids = bids.filter((b) => {
     const matchesAssignee = filterAssignee === 'all' || b.assignedTo === filterAssignee;
@@ -148,9 +149,180 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
         </div>
       </div>
 
+      {/* Mobile Stage Selector Tabs (Phone Viewports) */}
+      <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => setMobileSelectedStage('all')}
+          className={`px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1 shrink-0 ${
+            mobileSelectedStage === 'all'
+              ? 'bg-neutral-900 text-white font-semibold shadow-xs'
+              : 'bg-white border border-neutral-200 text-neutral-600 active:bg-neutral-100'
+          }`}
+        >
+          <span>All Stages</span>
+          <span className="font-mono text-[10px] opacity-80">({filteredBids.length})</span>
+        </button>
+        {ORDERED_STAGES.map((st) => {
+          const count = filteredBids.filter((b) => b.stage === st).length;
+          return (
+            <button
+              key={`mob-tab-${st}`}
+              type="button"
+              onClick={() => setMobileSelectedStage(st)}
+              className={`px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 shrink-0 ${
+                mobileSelectedStage === st
+                  ? 'bg-neutral-900 text-white font-semibold shadow-xs'
+                  : 'bg-white border border-neutral-200 text-neutral-600 active:bg-neutral-100'
+              }`}
+            >
+              <span>{STAGE_META[st].label}</span>
+              <span className={`font-mono text-[10px] px-1.5 py-0.2 rounded-full ${
+                mobileSelectedStage === st ? 'bg-neutral-800 text-white' : 'bg-neutral-100 text-neutral-600'
+              }`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {viewType === 'kanban' ? (
-        /* Kanban Pipeline Horizontal Scroll */
-        <div className="overflow-x-auto pb-4 pt-1">
+        <>
+          {/* Mobile Stage Cards View (Optimized for Phone viewports) */}
+          <div className="md:hidden space-y-3">
+            {mobileSelectedStage !== 'all' && (
+              <div className="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-neutral-900"></span>
+                    <h3 className="text-sm font-bold text-neutral-900">
+                      {STAGE_META[mobileSelectedStage].label}
+                    </h3>
+                  </div>
+                  <span className="font-mono text-xs font-semibold bg-neutral-100 text-neutral-800 px-2 py-0.5 rounded-md">
+                    {filteredBids.filter(b => b.stage === mobileSelectedStage).length} bids
+                  </span>
+                </div>
+                <p className="text-[11px] text-neutral-500 mt-1">
+                  {STAGE_META[mobileSelectedStage].description}
+                </p>
+              </div>
+            )}
+
+            {(mobileSelectedStage === 'all'
+              ? filteredBids
+              : filteredBids.filter(b => b.stage === mobileSelectedStage)
+            ).length === 0 ? (
+              <div className="bg-white border border-dashed border-neutral-300 rounded-xl p-8 text-center text-xs text-neutral-500">
+                No active bids currently in {mobileSelectedStage === 'all' ? 'the pipeline' : STAGE_META[mobileSelectedStage].label}.
+              </div>
+            ) : (
+              (mobileSelectedStage === 'all'
+                ? filteredBids
+                : filteredBids.filter(b => b.stage === mobileSelectedStage)
+              ).map(bid => {
+                const deadline = calculateDaysRemaining(bid.closingDate);
+                const completedCompliance = bid.complianceChecklist.filter(c => c.completed).length;
+                const totalCompliance = bid.complianceChecklist.length;
+
+                return (
+                  <div
+                    key={`mob-bid-${bid.id}`}
+                    onClick={() => onOpenBidDetail(bid)}
+                    className="bg-white border border-neutral-200/90 rounded-xl p-3.5 shadow-xs active:bg-neutral-50/80 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-mono font-bold text-neutral-900">{bid.internalRefNo}</span>
+                      <span className="text-[11px] font-medium text-neutral-700 bg-neutral-100 px-2 py-0.5 rounded">
+                        {STAGE_META[bid.stage].label}
+                      </span>
+                    </div>
+
+                    <h4 className="text-sm font-semibold text-neutral-950 mt-1.5 line-clamp-2 leading-snug">
+                      {bid.title}
+                    </h4>
+                    <p className="text-xs text-neutral-500 mt-0.5 truncate">
+                      {bid.organization}
+                    </p>
+
+                    <div className="mt-2.5 p-2 bg-neutral-50/90 rounded-lg grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-[10px] text-neutral-400 uppercase font-medium">Our Bid Offer</span>
+                        <div className="font-mono font-bold text-neutral-900">
+                          {formatETB(bid.ourBidAmountETB || bid.estimatedContractValueETB)}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-neutral-400 uppercase font-medium">Margin</span>
+                        <div className="font-mono font-bold text-emerald-700">
+                          {bid.targetMarginPercent}%
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Compliance Progress */}
+                    <div className="mt-2.5">
+                      <div className="flex items-center justify-between text-[11px] text-neutral-500 mb-1">
+                        <span>Compliance Readiness</span>
+                        <span className="font-mono font-medium">{completedCompliance}/{totalCompliance}</span>
+                      </div>
+                      <div className="w-full bg-neutral-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${completedCompliance === totalCompliance ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                          style={{ width: `${(completedCompliance / totalCompliance) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Footer with thumb-friendly controls */}
+                    <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1 text-[11px] text-neutral-500">
+                        <Clock className="w-3.5 h-3.5 text-neutral-400" />
+                        <span className={deadline.urgent ? 'text-rose-600 font-semibold' : ''}>
+                          {deadline.text}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => onOpenCalculator(bid)}
+                          className="p-2 min-h-[38px] min-w-[38px] flex items-center justify-center rounded-lg bg-neutral-100 text-neutral-700 active:bg-neutral-200"
+                          title="Open Pricing Calculator"
+                        >
+                          <Calculator className="w-4 h-4" />
+                        </button>
+                        {bid.stage !== 'lead' && (
+                          <button
+                            type="button"
+                            onClick={() => handlePrevStage(bid)}
+                            className="p-2 min-h-[38px] min-w-[38px] flex items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-700 active:bg-neutral-100"
+                            title="Previous stage"
+                          >
+                            <ArrowLeft className="w-4 h-4" />
+                          </button>
+                        )}
+                        {bid.stage !== 'awarded' && (
+                          <button
+                            type="button"
+                            onClick={() => handleNextStage(bid)}
+                            className="px-3.5 py-1.5 min-h-[38px] flex items-center gap-1.5 rounded-lg bg-neutral-900 text-white active:bg-neutral-800 text-xs font-semibold shadow-xs"
+                          >
+                            <span>Advance</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop Kanban Pipeline Horizontal Scroll */}
+          <div className="hidden md:block overflow-x-auto pb-4 pt-1">
           <div className="flex items-start gap-4 min-w-[1300px]">
             {ORDERED_STAGES.map((stageKey) => {
               const stageBids = filteredBids.filter((b) => b.stage === stageKey);
@@ -311,6 +483,7 @@ export const PipelineBoard: React.FC<PipelineBoardProps> = ({
             })}
           </div>
         </div>
+        </>
       ) : (
         /* High-Density Spreadsheet View */
         <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-xs">

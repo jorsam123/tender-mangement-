@@ -1,0 +1,119 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access unless explicitly granted
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'jordanzewdu@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Public Tender Catalog (2Merkato & Ethiopian Notices)
+    match /tenders/{tenderId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // User Private Workspace & Data Collections
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+
+      // Tracked Bids Subcollection
+      match /trackedBids/{bidId} {
+        allow get, list, delete: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+          isValidId(bidId) &&
+          incoming().ownerId == userId &&
+          incoming().title is string && incoming().title.size() <= 500 &&
+          incoming().organization is string && incoming().organization.size() <= 300;
+        allow update: if isOwner(userId) &&
+          isValidId(bidId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().title is string && incoming().title.size() <= 500 &&
+          incoming().organization is string && incoming().organization.size() <= 300;
+      }
+
+      // Company Profile Subcollection
+      match /companyProfile/{profileId} {
+        allow get, list, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) &&
+          isValidId(profileId) &&
+          incoming().ownerId == userId &&
+          incoming().companyName is string && incoming().companyName.size() <= 200;
+      }
+
+      // Documents & Licenses Subcollection
+      match /documents/{docId} {
+        allow get, list, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) &&
+          isValidId(docId) &&
+          incoming().ownerId == userId &&
+          incoming().title is string && incoming().title.size() <= 200;
+      }
+
+      // Key Personnel Subcollection
+      match /personnel/{personnelId} {
+        allow get, list, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) &&
+          isValidId(personnelId) &&
+          incoming().ownerId == userId &&
+          incoming().fullName is string && incoming().fullName.size() <= 150;
+      }
+
+      // Past Experiences Subcollection
+      match /experiences/{expId} {
+        allow get, list, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) &&
+          isValidId(expId) &&
+          incoming().ownerId == userId &&
+          incoming().projectTitle is string && incoming().projectTitle.size() <= 300;
+      }
+
+      // Financial Audit Reports Subcollection
+      match /auditReports/{auditId} {
+        allow get, list, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) &&
+          isValidId(auditId) &&
+          incoming().ownerId == userId &&
+          incoming().auditingFirm is string && incoming().auditingFirm.size() <= 200;
+      }
+
+      // Technical Offer Items Subcollection
+      match /technicalOffers/{offerId} {
+        allow get, list, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) &&
+          isValidId(offerId) &&
+          incoming().ownerId == userId &&
+          incoming().offeredBrandModel is string && incoming().offeredBrandModel.size() <= 200;
+      }
+    }
+  }
+}

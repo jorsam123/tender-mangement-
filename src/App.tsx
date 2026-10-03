@@ -32,7 +32,27 @@ import { PricingEngineView } from './components/PricingEngineView';
 import { TenderDetailModal } from './components/TenderDetailModal';
 import { BidCalculatorModal } from './components/BidCalculatorModal';
 import { NewBidModal } from './components/NewBidModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { generateTenderDossierPdf } from './utils/tenderPdfGenerator';
+import { useFirebase } from './firebase/FirebaseContext';
+import { auth } from './firebase/config';
+import {
+  saveTrackedBidToFirebase,
+  deleteTrackedBidFromFirebase,
+  saveCompanyProfileToFirebase,
+  saveDocumentToFirebase,
+  deleteDocumentFromFirebase,
+  savePersonnelToFirebase,
+  deletePersonnelFromFirebase,
+  saveExperienceToFirebase,
+  deleteExperienceFromFirebase,
+  saveAuditReportToFirebase,
+  deleteAuditReportFromFirebase,
+  saveTechnicalOfferToFirebase,
+  deleteTechnicalOfferFromFirebase,
+  syncAllRecordsToFirebase,
+  subscribeToUserRecords,
+} from './firebase/databaseService';
 
 const STORAGE_KEYS = {
   BIDS: 'tenderpulse_tracked_bids_v2',
@@ -45,8 +65,11 @@ const STORAGE_KEYS = {
 };
 
 export default function App() {
+  const { user, dbConnected, signInWithGoogle } = useFirebase();
   const [currentView, setCurrentView] = useState<AppView>('feed');
   const [tenders, setTenders] = useState<MerkatoTender[]>([]);
+  const [isSyncingToFirebase, setIsSyncingToFirebase] = useState<boolean>(false);
+  const [hasPromptedAutoSync, setHasPromptedAutoSync] = useState<boolean>(false);
 
   // Tracked Bids
   const [trackedBids, setTrackedBids] = useState<TrackedBid[]>(() => {
@@ -58,6 +81,7 @@ export default function App() {
     }
     return INITIAL_TRACKED_BIDS;
   });
+
 
   // Company Profile & Credentials
   const [company, setCompany] = useState<CompanyProfile>(() => {
@@ -195,7 +219,100 @@ export default function App() {
     }
   }, [technicalOffers]);
 
+  // Realtime Firestore synchronization for authenticated user
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const unsubscribe = subscribeToUserRecords(user.uid, {
+      onBids: (cloudBids) => {
+        if (cloudBids && cloudBids.length > 0) {
+          setTrackedBids(cloudBids);
+        }
+      },
+      onCompany: (cloudCompany) => {
+        if (cloudCompany && cloudCompany.companyName) {
+          setCompany(cloudCompany);
+        }
+      },
+      onDocuments: (cloudDocs) => {
+        if (cloudDocs && cloudDocs.length > 0) {
+          setDocuments(cloudDocs);
+        }
+      },
+      onPersonnel: (cloudPersonnel) => {
+        if (cloudPersonnel && cloudPersonnel.length > 0) {
+          setPersonnel(cloudPersonnel);
+        }
+      },
+      onExperiences: (cloudExperiences) => {
+        if (cloudExperiences && cloudExperiences.length > 0) {
+          setExperiences(cloudExperiences);
+        }
+      },
+      onAuditReports: (cloudAudits) => {
+        if (cloudAudits && cloudAudits.length > 0) {
+          setAuditReports(cloudAudits);
+        }
+      },
+      onTechnicalOffers: (cloudOffers) => {
+        if (cloudOffers && cloudOffers.length > 0) {
+          setTechnicalOffers(cloudOffers);
+        }
+      },
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Bulk push all records into Firestore database
+  const handleSyncAllToFirebase = async () => {
+    let targetUid = user?.uid || auth.currentUser?.uid;
+
+    if (!targetUid) {
+      showToast('Opening Google Sign-In to connect your database...');
+      try {
+        await signInWithGoogle();
+        targetUid = auth.currentUser?.uid;
+      } catch (e: any) {
+        showToast('Google Sign-In canceled or interrupted.');
+        return;
+      }
+    }
+
+    if (!targetUid) {
+      showToast('Sign in with Google to sync records to Firebase.');
+      return;
+    }
+
+    setIsSyncingToFirebase(true);
+    showToast('Syncing all records to Firebase Firestore...');
+
+    try {
+      const result = await syncAllRecordsToFirebase(targetUid, {
+        trackedBids,
+        company,
+        documents,
+        personnel,
+        experiences,
+        auditReports,
+        technicalOffers,
+      });
+
+      if (result.count > 0) {
+        showToast(`Successfully added ${result.count} records to Firebase Firestore!`);
+      } else {
+        showToast('All records up to date in Firestore.');
+      }
+    } catch (err: any) {
+      console.error('Error during bulk database sync:', err);
+      showToast(`Database sync error: ${err.message || 'Check connection'}`);
+    } finally {
+      setIsSyncingToFirebase(false);
+    }
+  };
+
   // Fetch live tenders from 2Merkato server proxy
+
   const fetchTenders = async (page: number) => {
     setIsLoadingFeed(true);
     try {
@@ -260,13 +377,25 @@ export default function App() {
     };
 
     setTrackedBids((prev) => [newBid, ...prev]);
+    if (user?.uid) {
+      saveTrackedBidToFirebase(user.uid, newBid).catch(console.error);
+    }
     showToast(`Tracked tender ${refNo} added to Bid Pipeline!`);
   };
 
   // Update bid stage
   const handleUpdateBidStage = (bidId: string, newStage: TenderStage) => {
     setTrackedBids((prev) =>
-      prev.map((b) => (b.id === bidId ? { ...b, stage: newStage } : b))
+      prev.map((b) => {
+        if (b.id === bidId) {
+          const updated = { ...b, stage: newStage };
+          if (user?.uid) {
+            saveTrackedBidToFirebase(user.uid, updated).catch(console.error);
+          }
+          return updated;
+        }
+        return b;
+      })
     );
     showToast(`Stage updated to ${newStage}`);
   };
@@ -276,6 +405,9 @@ export default function App() {
     setTrackedBids((prev) =>
       prev.map((b) => (b.id === updatedBid.id ? updatedBid : b))
     );
+    if (user?.uid) {
+      saveTrackedBidToFirebase(user.uid, updatedBid).catch(console.error);
+    }
   };
 
   // Update CPO status
@@ -294,6 +426,9 @@ export default function App() {
           if (status === 'Released') {
             updated.cpoReturnedDate = new Date().toISOString().split('T')[0];
           }
+          if (user?.uid) {
+            saveTrackedBidToFirebase(user.uid, updated).catch(console.error);
+          }
           return updated;
         }
         return b;
@@ -307,12 +442,16 @@ export default function App() {
     setTrackedBids((prev) =>
       prev.map((b) => {
         if (b.id === bidId) {
-          return {
+          const updated = {
             ...b,
             complianceChecklist: b.complianceChecklist.map((c) =>
               c.id === itemId ? { ...c, completed: !c.completed } : c
             ),
           };
+          if (user?.uid) {
+            saveTrackedBidToFirebase(user.uid, updated).catch(console.error);
+          }
+          return updated;
         }
         return b;
       })
@@ -322,14 +461,20 @@ export default function App() {
   // Save calculated price
   const handleSavePrice = (bidId: string, ourBidAmountETB: number, targetMarginPercent: number) => {
     setTrackedBids((prev) =>
-      prev.map((b) =>
-        b.id === bidId
-          ? { ...b, ourBidAmountETB, targetMarginPercent }
-          : b
-      )
+      prev.map((b) => {
+        if (b.id === bidId) {
+          const updated = { ...b, ourBidAmountETB, targetMarginPercent };
+          if (user?.uid) {
+            saveTrackedBidToFirebase(user.uid, updated).catch(console.error);
+          }
+          return updated;
+        }
+        return b;
+      })
     );
     showToast('Updated tender quotation saved!');
   };
+
 
   // Open inspection modal
   const handleInspectTender = (tender: MerkatoTender) => {
@@ -416,6 +561,15 @@ export default function App() {
     showToast('Exported pipeline to CSV successfully');
   };
 
+  const urgentDeadlinesCount = trackedBids.filter((b) => {
+    const diffHours = (new Date(b.closingDate).getTime() - Date.now()) / (1000 * 60 * 60);
+    return diffHours > 0 && diffHours <= 72;
+  }).length;
+
+  const pendingCpoCount = trackedBids.filter(
+    (b) => b.cpoStatus === 'Required' || b.cpoStatus === 'Drafted'
+  ).length;
+
   return (
     <div className="min-h-screen bg-neutral-100 flex flex-col font-sans">
       {/* Top Navigation */}
@@ -430,10 +584,19 @@ export default function App() {
         isRefreshing={isRefreshing}
         onExportCsv={handleExportCsv}
         trackedCount={trackedBids.length}
+        onSyncAllToFirebase={handleSyncAllToFirebase}
+        isSyncingToFirebase={isSyncingToFirebase}
+        urgentDeadlinesCount={urgentDeadlinesCount}
+        pendingCpoCount={pendingCpoCount}
+        totalCategoryTenders={totalCategoryTenders}
       />
+
+
 
       {/* Header Context & Tabular Metrics Strip */}
       <HeaderMetrics
+
+
         totalCategoryTenders={totalCategoryTenders}
         trackedBids={trackedBids}
         isLiveFeed={true}
@@ -441,7 +604,7 @@ export default function App() {
       />
 
       {/* Main View Router */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 sm:pb-12">
         {currentView === 'feed' && (
           <LiveFeedView
             tenders={tenders}
@@ -485,26 +648,82 @@ export default function App() {
         {currentView === 'dossier' && (
           <CompanyDossierView
             company={company}
-            onUpdateCompany={setCompany}
+            onUpdateCompany={(updated) => {
+              setCompany(updated);
+              if (user?.uid) {
+                saveCompanyProfileToFirebase(user.uid, updated).catch(console.error);
+              }
+            }}
             documents={documents}
-            onAddDocument={(doc) => setDocuments((prev) => [doc, ...prev])}
-            onDeleteDocument={(id) => setDocuments((prev) => prev.filter((d) => d.id !== id))}
+            onAddDocument={(docItem) => {
+              setDocuments((prev) => [docItem, ...prev]);
+              if (user?.uid) {
+                saveDocumentToFirebase(user.uid, docItem).catch(console.error);
+              }
+            }}
+            onDeleteDocument={(id) => {
+              setDocuments((prev) => prev.filter((d) => d.id !== id));
+              if (user?.uid) {
+                deleteDocumentFromFirebase(user.uid, id).catch(console.error);
+              }
+            }}
             personnel={personnel}
-            onAddPersonnel={(p) => setPersonnel((prev) => [p, ...prev])}
-            onDeletePersonnel={(id) => setPersonnel((prev) => prev.filter((p) => p.id !== id))}
+            onAddPersonnel={(p) => {
+              setPersonnel((prev) => [p, ...prev]);
+              if (user?.uid) {
+                savePersonnelToFirebase(user.uid, p).catch(console.error);
+              }
+            }}
+            onDeletePersonnel={(id) => {
+              setPersonnel((prev) => prev.filter((p) => p.id !== id));
+              if (user?.uid) {
+                deletePersonnelFromFirebase(user.uid, id).catch(console.error);
+              }
+            }}
             experiences={experiences}
-            onAddExperience={(exp) => setExperiences((prev) => [exp, ...prev])}
-            onDeleteExperience={(id) => setExperiences((prev) => prev.filter((e) => e.id !== id))}
+            onAddExperience={(exp) => {
+              setExperiences((prev) => [exp, ...prev]);
+              if (user?.uid) {
+                saveExperienceToFirebase(user.uid, exp).catch(console.error);
+              }
+            }}
+            onDeleteExperience={(id) => {
+              setExperiences((prev) => prev.filter((e) => e.id !== id));
+              if (user?.uid) {
+                deleteExperienceFromFirebase(user.uid, id).catch(console.error);
+              }
+            }}
             auditReports={auditReports}
-            onAddAuditReport={(rep) => setAuditReports((prev) => [rep, ...prev])}
-            onDeleteAuditReport={(id) => setAuditReports((prev) => prev.filter((a) => a.id !== id))}
+            onAddAuditReport={(rep) => {
+              setAuditReports((prev) => [rep, ...prev]);
+              if (user?.uid) {
+                saveAuditReportToFirebase(user.uid, rep).catch(console.error);
+              }
+            }}
+            onDeleteAuditReport={(id) => {
+              setAuditReports((prev) => prev.filter((a) => a.id !== id));
+              if (user?.uid) {
+                deleteAuditReportFromFirebase(user.uid, id).catch(console.error);
+              }
+            }}
             technicalOffers={technicalOffers}
-            onAddTechnicalOffer={(to) => setTechnicalOffers((prev) => [...prev, to])}
-            onDeleteTechnicalOffer={(id) => setTechnicalOffers((prev) => prev.filter((t) => t.id !== id))}
+            onAddTechnicalOffer={(to) => {
+              setTechnicalOffers((prev) => [...prev, to]);
+              if (user?.uid) {
+                saveTechnicalOfferToFirebase(user.uid, to).catch(console.error);
+              }
+            }}
+            onDeleteTechnicalOffer={(id) => {
+              setTechnicalOffers((prev) => prev.filter((t) => t.id !== id));
+              if (user?.uid) {
+                deleteTechnicalOfferFromFirebase(user.uid, id).catch(console.error);
+              }
+            }}
             trackedBids={trackedBids}
             onShowToast={showToast}
           />
         )}
+
 
         {currentView === 'cpo' && (
           <CpoManagerView
@@ -536,11 +755,26 @@ export default function App() {
         )}
       </main>
 
+      {/* Mobile Bottom Navigation Dock */}
+      <MobileBottomNav
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        trackedCount={trackedBids.length}
+        onRefreshFeed={() => {
+          setIsRefreshing(true);
+          fetchTenders(currentPage);
+        }}
+        isRefreshing={isRefreshing}
+        onExportCsv={handleExportCsv}
+        onSyncAllToFirebase={handleSyncAllToFirebase}
+        isSyncingToFirebase={isSyncingToFirebase}
+      />
+
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-neutral-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-xl border border-neutral-800 animate-fade-in flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span>{toastMessage}</span>
+        <div className="fixed bottom-16 sm:bottom-5 right-3 sm:right-5 z-50 bg-neutral-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-xl border border-neutral-800 animate-fade-in flex items-center gap-2 max-w-[90vw]">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+          <span className="truncate">{toastMessage}</span>
         </div>
       )}
 
@@ -552,6 +786,9 @@ export default function App() {
         onTrackTender={handleTrackTender}
         onUpdateTrackedBid={(updated) => {
           setTrackedBids((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+          if (user?.uid) {
+            saveTrackedBidToFirebase(user.uid, updated).catch(console.error);
+          }
           showToast('Updated bid details saved');
         }}
         onDownloadPdf={handleDownloadPdf}
@@ -573,10 +810,14 @@ export default function App() {
         onClose={() => setIsNewBidModalOpen(false)}
         onAddBid={(newBid) => {
           setTrackedBids((prev) => [newBid, ...prev]);
+          if (user?.uid) {
+            saveTrackedBidToFirebase(user.uid, newBid).catch(console.error);
+          }
           showToast(`Bid ${newBid.internalRefNo} registered in pipeline!`);
         }}
         defaultCategoryId="general_procurement"
       />
+
     </div>
   );
 }

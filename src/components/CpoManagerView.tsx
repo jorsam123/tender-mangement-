@@ -90,17 +90,17 @@ export const CpoManagerView: React.FC<CpoManagerViewProps> = ({
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white border border-neutral-200 rounded-lg p-3 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1 p-1 bg-neutral-100 rounded-md border border-neutral-200 text-xs">
-          <span className="px-2 text-neutral-500 font-medium text-[11px]">CPO Status:</span>
+      <div className="bg-white border border-neutral-200 rounded-xl p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none text-xs">
+          <span className="text-neutral-500 font-semibold text-[11px] uppercase tracking-wider shrink-0 mr-1">Status:</span>
           {(['all', 'Required', 'Drafted', 'Issued', 'Submitted', 'Released'] as const).map((st) => (
             <button
               key={st}
               onClick={() => setFilterStatus(st)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
                 filterStatus === st
-                  ? 'bg-white text-neutral-950 shadow-xs'
-                  : 'text-neutral-600 hover:text-neutral-950'
+                  ? 'bg-neutral-900 text-white shadow-xs font-semibold'
+                  : 'bg-neutral-100 text-neutral-600 hover:text-neutral-950 active:bg-neutral-200'
               }`}
             >
               {st === 'all' ? 'All CPOs' : st}
@@ -113,8 +113,133 @@ export const CpoManagerView: React.FC<CpoManagerViewProps> = ({
         </div>
       </div>
 
-      {/* CPO Records Table */}
-      <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-xs">
+      {/* Mobile CPO Cards List (Phone viewports) */}
+      <div className="md:hidden space-y-3">
+        {filteredBids.length === 0 ? (
+          <div className="bg-white border border-dashed border-neutral-300 rounded-xl p-8 text-center text-xs text-neutral-500">
+            No bid security instruments found matching filter.
+          </div>
+        ) : (
+          filteredBids.map((bid) => {
+            const meta = CPO_STATUS_META[bid.cpoStatus];
+
+            return (
+              <div
+                key={`mob-cpo-${bid.id}`}
+                className="bg-white border border-neutral-200/90 rounded-xl p-3.5 shadow-xs space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-semibold text-neutral-900 line-clamp-1">
+                      {bid.title}
+                    </h4>
+                    <div className="text-[11px] text-neutral-500 flex items-center gap-1.5 mt-0.5">
+                      <span className="font-mono text-neutral-700">{bid.internalRefNo}</span>
+                      <span>·</span>
+                      <span className="truncate">{bid.organization}</span>
+                    </div>
+                  </div>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded border shrink-0 ${meta.bgClass} ${meta.textClass}`}
+                  >
+                    {meta.label}
+                  </span>
+                </div>
+
+                <div className="p-2.5 bg-neutral-50 rounded-lg grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-[10px] text-neutral-400 uppercase font-medium">Bond Value</span>
+                    <div className="font-mono font-bold text-neutral-900 tabular-nums">
+                      {formatETB(bid.bidBondAmountETB)}
+                    </div>
+                    <span className="text-[10px] text-neutral-400">100% Cash Margin</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-neutral-400 uppercase font-medium">Bank & Ref</span>
+                    <div className="text-[11px] font-medium text-neutral-800 truncate">
+                      {bid.cpoBank || 'Unassigned'}
+                    </div>
+                    <div className="font-mono text-[10px] text-neutral-500 truncate">
+                      {bid.cpoNumber || 'No CPO #'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-neutral-100 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onOpenBidDetail(bid)}
+                    className="text-xs text-neutral-600 hover:text-neutral-900 font-medium underline"
+                  >
+                    View Bid Info
+                  </button>
+
+                  <div className="flex items-center gap-1.5">
+                    {bid.cpoStatus === 'Required' && (
+                      <button
+                        onClick={() =>
+                          onUpdateCpoStatus(
+                            bid.id,
+                            'Drafted',
+                            bid.cpoBank || 'Commercial Bank of Ethiopia (CBE)'
+                          )
+                        }
+                        className="px-3 py-1.5 min-h-[36px] text-xs font-semibold bg-neutral-900 text-white rounded-lg active:bg-neutral-800 shadow-xs"
+                      >
+                        Draft CPO
+                      </button>
+                    )}
+
+                    {bid.cpoStatus === 'Drafted' && (
+                      <button
+                        onClick={() =>
+                          onUpdateCpoStatus(
+                            bid.id,
+                            'Issued',
+                            bid.cpoBank,
+                            `CBE-CPO-${Math.floor(100000 + Math.random() * 900000)}`
+                          )
+                        }
+                        className="px-3 py-1.5 min-h-[36px] text-xs font-semibold bg-emerald-600 text-white rounded-lg active:bg-emerald-700 shadow-xs"
+                      >
+                        Confirm Issued
+                      </button>
+                    )}
+
+                    {bid.cpoStatus === 'Issued' && (
+                      <button
+                        onClick={() => onUpdateCpoStatus(bid.id, 'Submitted')}
+                        className="px-3 py-1.5 min-h-[36px] text-xs font-semibold bg-indigo-600 text-white rounded-lg active:bg-indigo-700 shadow-xs"
+                      >
+                        Mark Submitted
+                      </button>
+                    )}
+
+                    {bid.cpoStatus === 'Submitted' && (
+                      <button
+                        onClick={() => onUpdateCpoStatus(bid.id, 'Released')}
+                        className="px-3 py-1.5 min-h-[36px] text-xs font-semibold bg-neutral-100 active:bg-neutral-200 text-neutral-900 border border-neutral-300 rounded-lg shadow-xs"
+                      >
+                        Reclaim Collateral
+                      </button>
+                    )}
+
+                    {bid.cpoStatus === 'Released' && (
+                      <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Unlocked
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop CPO Records Table */}
+      <div className="hidden md:block bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

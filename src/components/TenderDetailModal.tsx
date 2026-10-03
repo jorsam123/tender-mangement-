@@ -78,44 +78,48 @@ export const TenderDetailModal: React.FC<TenderDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-neutral-950/60 backdrop-blur-xs">
-      <div className="bg-white border border-neutral-200 rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 bg-neutral-950/60 backdrop-blur-xs">
+      <div className="bg-white border-t sm:border border-neutral-200 rounded-t-2xl sm:rounded-xl shadow-2xl w-full max-w-3xl max-h-[94vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Mobile handle indicator */}
+        <div className="sm:hidden w-10 h-1 bg-neutral-300 rounded-full mx-auto mt-2 -mb-1 shrink-0"></div>
+
         {/* Modal Top Bar */}
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-neutral-200 bg-neutral-50/70 shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-neutral-200 bg-neutral-50/70 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {tender.logo ? (
               <img
                 src={tender.logo}
                 alt={tender.organization}
                 referrerPolicy="no-referrer"
-                className="w-10 h-10 object-contain rounded border border-neutral-200 bg-white p-0.5 shrink-0"
+                className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded border border-neutral-200 bg-white p-0.5 shrink-0"
                 onError={(e) => {
                   (e.currentTarget as HTMLElement).style.display = 'none';
                 }}
               />
             ) : (
-              <div className="w-10 h-10 rounded bg-neutral-200 border border-neutral-300 flex items-center justify-center font-bold text-xs shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded bg-neutral-200 border border-neutral-300 flex items-center justify-center font-bold text-xs shrink-0">
                 {tender.organization.slice(0, 2).toUpperCase()}
               </div>
             )}
 
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-neutral-800 flex items-center gap-2">
-                <span>{tender.organization}</span>
+              <div className="text-xs font-semibold text-neutral-800 flex items-center gap-1.5 truncate">
+                <span className="truncate">{tender.organization}</span>
                 <span className="font-mono text-neutral-400">·</span>
                 <span className="font-mono text-[11px] text-neutral-500">{tender.procurementType}</span>
                 <span className="font-mono text-neutral-400">·</span>
                 <span className="text-[11px] text-neutral-500">{tender.region}</span>
               </div>
-              <h2 className="text-sm sm:text-base font-bold text-neutral-950 truncate mt-0.5">
+              <h2 className="text-xs sm:text-base font-bold text-neutral-950 line-clamp-1 mt-0.5">
                 {tender.title}
               </h2>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-neutral-700 rounded-md transition-colors shrink-0 ml-2"
+            className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center text-neutral-500 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors shrink-0 ml-1"
           >
             <X className="w-5 h-5" />
           </button>
@@ -322,7 +326,7 @@ export const TenderDetailModal: React.FC<TenderDetailModalProps> = ({
             </div>
           ) : (
             /* Prompt to Track in Pipeline */
-            <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-lg flex items-center justify-between">
+            <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div>
                 <h4 className="text-xs font-semibold text-emerald-950">
                   Ready to bid on this opportunity?
@@ -333,51 +337,68 @@ export const TenderDetailModal: React.FC<TenderDetailModalProps> = ({
               </div>
 
               <button
+                type="button"
                 onClick={() => {
                   onTrackTender(tender);
                   onClose();
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-neutral-900 rounded-md hover:bg-neutral-800 transition-colors shadow-xs shrink-0 ml-3"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[42px] text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 active:bg-neutral-950 transition-colors shadow-xs shrink-0"
               >
-                <BookmarkPlus className="w-3.5 h-3.5" />
-                Track in Pipeline
+                <BookmarkPlus className="w-4 h-4" />
+                <span>Track in Pipeline</span>
               </button>
             </div>
           )}
         </div>
 
         {/* Modal Bottom Actions */}
-        <div className="flex items-center justify-between p-4 border-t border-neutral-200 bg-neutral-50/70 shrink-0">
-          <a
-            href={tender.sourceUrl || 'https://tender.2merkato.com/tenders'}
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs text-neutral-600 hover:text-neutral-950 inline-flex items-center gap-1 font-medium transition-colors"
-          >
-            <span>View notice on 2merkato.com</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-3.5 sm:p-4 border-t border-neutral-200 bg-neutral-50/80 shrink-0 gap-2.5">
+          <div className="flex items-center justify-between sm:justify-start gap-2">
+            <a
+              href={tender.sourceUrl || 'https://tender.2merkato.com/tenders'}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-neutral-600 hover:text-neutral-950 inline-flex items-center gap-1 font-medium transition-colors"
+            >
+              <span>2merkato Notice</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+
+            {trackedBid && onDownloadPdf && (
+              <button
+                type="button"
+                onClick={() => onDownloadPdf(trackedBid)}
+                className="sm:hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-800 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-xs"
+              >
+                <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                <span>PDF</span>
+              </button>
+            )}
+          </div>
 
           <div className="flex items-center gap-2">
             {trackedBid && onDownloadPdf && (
               <button
+                type="button"
                 onClick={() => onDownloadPdf(trackedBid)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-800 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 transition-colors shadow-xs"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 min-h-[38px] text-xs font-semibold text-neutral-800 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors shadow-xs"
               >
                 <FileText className="w-3.5 h-3.5 text-emerald-600" />
                 Full Dossier (PDF)
               </button>
             )}
             <button
+              type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors"
+              className="flex-1 sm:flex-initial px-4 py-2 min-h-[42px] sm:min-h-[38px] text-xs font-medium text-neutral-700 bg-white sm:bg-transparent border sm:border-0 border-neutral-200 rounded-lg hover:text-neutral-950 transition-colors text-center"
             >
               Close
             </button>
             {trackedBid && (
               <button
+                type="button"
                 onClick={handleSaveTrackedChanges}
-                className="px-4 py-1.5 text-xs font-medium text-white bg-neutral-900 hover:bg-neutral-800 rounded-md transition-colors shadow-xs"
+                className="flex-1 sm:flex-initial px-5 py-2 min-h-[42px] sm:min-h-[38px] text-xs font-semibold text-white bg-neutral-900 hover:bg-neutral-800 active:bg-neutral-950 rounded-lg transition-colors shadow-xs text-center"
               >
                 Save Changes
               </button>

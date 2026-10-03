@@ -46,34 +46,38 @@ export const BidCalculatorModal: React.FC<BidCalculatorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/60 backdrop-blur-xs">
-      <div className="bg-white border border-neutral-200 rounded-xl shadow-xl w-full max-w-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 bg-neutral-950/60 backdrop-blur-xs">
+      <div className="bg-white border-t sm:border border-neutral-200 rounded-t-2xl sm:rounded-xl shadow-xl w-full max-w-2xl max-h-[94vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Mobile handle indicator */}
+        <div className="sm:hidden w-10 h-1 bg-neutral-300 rounded-full mx-auto mt-2 -mb-1 shrink-0"></div>
+
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b border-neutral-100 bg-neutral-50/50">
+        <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-neutral-100 bg-neutral-50/50 shrink-0">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-neutral-900 text-white rounded-md">
               <Calculator className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-neutral-900">
+              <h3 className="text-xs sm:text-sm font-bold text-neutral-900">
                 Bid Financial Simulator & Margin Calculator
               </h3>
-              <p className="text-xs text-neutral-500 font-mono">
+              <p className="text-[11px] text-neutral-500 font-mono">
                 {bid.internalRefNo} · {bid.organization}
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 text-neutral-400 hover:text-neutral-700 rounded-md transition-colors"
+            className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center text-neutral-400 hover:text-neutral-700 rounded-lg hover:bg-neutral-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 space-y-5 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-5 space-y-5 overflow-y-auto flex-1">
           <div>
             <div className="text-xs font-semibold text-neutral-800">Target Opportunity:</div>
             <div className="text-xs text-neutral-600 line-clamp-1 mt-0.5">{bid.title}</div>
@@ -194,19 +198,21 @@ export const BidCalculatorModal: React.FC<BidCalculatorModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-2 p-4 border-t border-neutral-100 bg-neutral-50/50">
+        <div className="flex items-center justify-end gap-2 p-3.5 sm:p-4 border-t border-neutral-100 bg-neutral-50/70 shrink-0">
           <button
+            type="button"
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 rounded-md transition-colors"
+            className="flex-1 sm:flex-initial px-4 py-2 min-h-[42px] sm:min-h-[38px] text-xs font-medium text-neutral-700 bg-white sm:bg-transparent border sm:border-0 border-neutral-200 rounded-lg hover:text-neutral-950 transition-colors text-center"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSave}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-md hover:bg-neutral-800 transition-colors shadow-xs"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2 min-h-[42px] sm:min-h-[38px] text-xs font-semibold text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 active:bg-neutral-950 transition-colors shadow-xs"
           >
             <Save className="w-3.5 h-3.5" />
-            Apply to Tracked Bid
+            <span>Apply to Bid</span>
           </button>
         </div>
       </div>
