@@ -4,6 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TenderPulse - 2Merkato Tender & Bid Management Platform</title>
+    <script>
+      // Suppress Vite HMR WebSocket connection errors in iframe/preview environments
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && (
+          String(event.reason).includes('WebSocket') ||
+          String(event.reason?.message).includes('WebSocket') ||
+          String(event.reason).includes('[vite]')
+        )) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      });
+      window.addEventListener('error', function(event) {
+        if (event.message && (
+          event.message.includes('[vite]') ||
+          event.message.includes('WebSocket') ||
+          event.message.includes('websocket')
+        )) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      });
+    </script>
     <meta name="description" content="Enterprise tender discovery, bid lifecycle tracking, CPO bid bond management, and compliance pipeline for Ethiopian public procurement tenders sourced from 2Merkato." />
     <meta property="og:title" content="TenderPulse - 2Merkato Tender & Bid Management Platform" />
     <meta property="og:description" content="Enterprise tender discovery, bid lifecycle tracking, CPO bid bond management, and compliance pipeline for Ethiopian public procurement tenders sourced from 2Merkato." />
