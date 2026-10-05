@@ -8,23 +8,19 @@ import {
   Building,
   ShieldCheck,
   Calculator,
-  Database,
-  Cloud,
-  CheckCircle2,
-  LogIn,
-  LogOut,
   ChevronDown,
   Layers,
   ExternalLink,
   Menu,
   X,
-  FileCheck,
-  TrendingUp,
+  LogIn,
+  LogOut,
   Sparkles,
-  Shield,
-  Briefcase,
-  AlertTriangle,
   Landmark,
+  FileSpreadsheet,
+  CheckCircle2,
+  ArrowUpRight,
+  ShieldAlert,
 } from 'lucide-react';
 import { useFirebase } from '../firebase/FirebaseContext';
 
@@ -38,8 +34,8 @@ interface TopNavProps {
   isRefreshing: boolean;
   onExportCsv: () => void;
   trackedCount: number;
-  onSyncAllToFirebase: () => void;
-  isSyncingToFirebase: boolean;
+  onSyncAllToFirebase?: () => void;
+  isSyncingToFirebase?: boolean;
   recordsInDbCount?: number;
   urgentDeadlinesCount?: number;
   pendingCpoCount?: number;
@@ -54,13 +50,11 @@ export const TopNav: React.FC<TopNavProps> = ({
   isRefreshing,
   onExportCsv,
   trackedCount,
-  onSyncAllToFirebase,
-  isSyncingToFirebase,
   urgentDeadlinesCount = 0,
   pendingCpoCount = 0,
   totalCategoryTenders = 10004,
 }) => {
-  const { user, dbConnected, isLoggingIn, signInWithGoogle, signOutUser } = useFirebase();
+  const { user, isLoggingIn, signInWithGoogle, signOutUser } = useFirebase();
   const [showFeaturesMenu, setShowFeaturesMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileHeaderMenu, setShowMobileHeaderMenu] = useState(false);
@@ -88,79 +82,89 @@ export const TopNav: React.FC<TopNavProps> = ({
     setShowMobileHeaderMenu(false);
   };
 
-  const featureItems: Array<{
-    view: AppView;
-    title: string;
-    description: string;
-    icon: React.ComponentType<{ className?: string }>;
-    category: 'Discovery' | 'Pipeline' | 'Compliance' | 'Finance';
-    badge?: string;
-    badgeColor?: string;
-  }> = [
+  const discoveryAndPipelineFeatures = [
     {
-      view: 'feed',
+      view: 'feed' as AppView,
       title: '2Merkato Live Feed',
-      description: 'Real-time Ethiopian procurement tenders from 2Merkato & government gazettes',
+      subtitle: 'Real-time Ethiopian Tenders',
+      description: 'Scraped tender notices from 2Merkato, regional bureaus & official government gazettes.',
       icon: FileText,
-      category: 'Discovery',
-      badge: `${totalCategoryTenders.toLocaleString()}+`,
-      badgeColor: 'text-neutral-600 bg-neutral-100',
+      iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200/60',
+      badge: `${totalCategoryTenders.toLocaleString()}+ live`,
+      badgeStyle: 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono',
     },
     {
-      view: 'pipeline',
-      title: 'Bid Pipeline Board',
-      description: 'Multi-stage Kanban from initial qualification to final contract award',
+      view: 'pipeline' as AppView,
+      title: 'Bid Pipeline Kanban',
+      subtitle: 'Multi-Stage Proposal Flow',
+      description: 'Track submissions from qualification and technical prep to opening and award.',
       icon: Layers,
-      category: 'Pipeline',
-      badge: `${trackedCount} active`,
-      badgeColor: 'text-neutral-900 bg-neutral-100 font-semibold',
+      iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-200/60',
+      badge: trackedCount > 0 ? `${trackedCount} active` : '0 active',
+      badgeStyle: 'bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold',
     },
     {
-      view: 'deadlines',
+      view: 'deadlines' as AppView,
       title: 'Submission Deadlines',
-      description: 'Real-time countdowns, transit buffers, and sealed wax tender box delivery checklist',
+      subtitle: 'Closing Timers & Courier Buffer',
+      description: 'Live countdowns, wax-sealed envelope checklist & Addis Ababa traffic transit buffers.',
       icon: Clock,
-      category: 'Pipeline',
+      iconBg: 'bg-rose-50 text-rose-600 border border-rose-200/60',
       badge: urgentDeadlinesCount > 0 ? `${urgentDeadlinesCount} urgent` : undefined,
-      badgeColor: 'text-rose-700 bg-rose-50 border border-rose-200',
-    },
-    {
-      view: 'cpo',
-      title: 'CPO & Bank Guarantees',
-      description: 'Bid bond issuing, CBE / private bank tracking, 90-day expiry and release manager',
-      icon: Landmark,
-      category: 'Finance',
-      badge: pendingCpoCount > 0 ? `${pendingCpoCount} pending` : undefined,
-      badgeColor: 'text-amber-800 bg-amber-50 border border-amber-200',
-    },
-    {
-      view: 'dossier',
-      title: 'Company Dossier & Credentials',
-      description: 'Verified trade licenses, TIN, VAT, FPPA certificates, key personnel & audits',
-      icon: Building,
-      category: 'Compliance',
-    },
-    {
-      view: 'compliance',
-      title: 'Compliance Matrix',
-      description: 'Mandatory statutory readiness checklist across all active tender submissions',
-      icon: ShieldCheck,
-      category: 'Compliance',
-    },
-    {
-      view: 'calculator',
-      title: 'Pricing Engine & VAT',
-      description: '15% VAT, 2% withholding tax (WHT) simulator, and gross margin calculator',
-      icon: Calculator,
-      category: 'Finance',
+      badgeStyle: 'bg-rose-50 text-rose-700 border border-rose-200 font-semibold animate-pulse',
     },
   ];
+
+  const complianceAndFinanceFeatures = [
+    {
+      view: 'cpo' as AppView,
+      title: 'CPO & Bank Guarantees',
+      subtitle: 'Bid Bond & Security Tracking',
+      description: 'Manage Commercial Bank of Ethiopia (CBE) & private bank CPOs with 90-day expiry tracking.',
+      icon: Landmark,
+      iconBg: 'bg-amber-50 text-amber-600 border border-amber-200/60',
+      badge: pendingCpoCount > 0 ? `${pendingCpoCount} pending` : undefined,
+      badgeStyle: 'bg-amber-50 text-amber-800 border border-amber-200 font-semibold',
+    },
+    {
+      view: 'dossier' as AppView,
+      title: 'Company Dossier & Vault',
+      subtitle: 'Licenses, TIN, VAT & Personnel',
+      description: 'Store renewed commercial trade licenses, tax clearance, FPPA certificates & staff CVs.',
+      icon: Building,
+      iconBg: 'bg-purple-50 text-purple-600 border border-purple-200/60',
+      badge: 'Statutory',
+      badgeStyle: 'bg-neutral-100 text-neutral-600 border border-neutral-200',
+    },
+    {
+      view: 'compliance' as AppView,
+      title: 'Compliance Matrix',
+      subtitle: 'Statutory Eligibility Verification',
+      description: 'Pre-flight check against mandatory tender requirements, tax clearance & valid certificates.',
+      icon: ShieldCheck,
+      iconBg: 'bg-teal-50 text-teal-600 border border-teal-200/60',
+      badge: 'Audit Ready',
+      badgeStyle: 'bg-teal-50 text-teal-700 border border-teal-200 font-medium',
+    },
+    {
+      view: 'calculator' as AppView,
+      title: 'Pricing Engine & VAT',
+      subtitle: '15% VAT & 2% Withholding (WHT)',
+      description: 'Simulate gross margins, Ethiopian statutory taxes, customs duties & final offer pricing.',
+      icon: Calculator,
+      iconBg: 'bg-sky-50 text-sky-600 border border-sky-200/60',
+      badge: 'Financial',
+      badgeStyle: 'bg-sky-50 text-sky-700 border border-sky-200',
+    },
+  ];
+
+  const allFeatures = [...discoveryAndPipelineFeatures, ...complianceAndFinanceFeatures];
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/90 shadow-2xs">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-between gap-3">
-          {/* Section 1: Logo & Brand + Database Sync Pill */}
+          {/* Brand & Logo */}
           <div className="flex items-center gap-3 shrink-0">
             <button
               type="button"
@@ -175,36 +179,16 @@ export const TopNav: React.FC<TopNavProps> = ({
                   <span className="text-base font-bold tracking-tight text-neutral-950 group-hover:text-neutral-800">
                     TenderPulse
                   </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Live System Online"></span>
                 </div>
                 <span className="text-[10px] text-neutral-500 tracking-wider uppercase font-medium">
                   2Merkato Procurement
                 </span>
               </div>
             </button>
-
-            {/* Cloud Database Status Pill */}
-            <div
-              title={
-                user
-                  ? `Firebase Firestore active for ${user.email}. Database: ai-studio-tenderpulse2merk`
-                  : 'Firestore provisioned. Sign in with Google to sync all pipeline records.'
-              }
-              className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border border-neutral-200/80 bg-neutral-50 text-neutral-600"
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  user ? 'bg-emerald-500' : dbConnected ? 'bg-amber-400' : 'bg-neutral-300'
-                }`}
-              ></span>
-              <span className="font-medium text-neutral-700">Firestore:</span>
-              <span className="font-mono text-[10px] text-neutral-600">
-                {user ? 'Synced' : dbConnected ? 'Ready' : 'Connecting'}
-              </span>
-            </div>
           </div>
 
-          {/* Section 2: Desktop Primary Navigation */}
+          {/* Desktop Primary Navigation */}
           <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5">
             {/* 1. Feed */}
             <button
@@ -288,113 +272,204 @@ export const TopNav: React.FC<TopNavProps> = ({
               <span>Company Dossier</span>
             </button>
 
-            {/* 6. "All Features" Mega-Menu Trigger */}
+            {/* 6. All Features Mega-Menu Trigger */}
             <div className="relative" ref={featuresMenuRef}>
               <button
                 type="button"
                 onClick={() => setShowFeaturesMenu(!showFeaturesMenu)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 border ${
                   showFeaturesMenu || currentView === 'compliance' || currentView === 'calculator'
-                    ? 'bg-neutral-100 text-neutral-950 font-semibold'
-                    : 'text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100'
+                    ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
+                    : 'bg-neutral-50 text-neutral-700 border-neutral-200/90 hover:bg-neutral-100 hover:text-neutral-950'
                 }`}
                 aria-expanded={showFeaturesMenu}
               >
-                <span>All Features</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showFeaturesMenu ? 'rotate-180' : ''}`} />
+                <Sparkles className={`w-3.5 h-3.5 ${showFeaturesMenu ? 'text-emerald-400' : 'text-neutral-500'}`} />
+                <span className="font-semibold">All Features</span>
+                <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${
+                  showFeaturesMenu ? 'bg-neutral-800 text-neutral-300' : 'bg-neutral-200/70 text-neutral-600'
+                }`}>
+                  7
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showFeaturesMenu ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Mega-Dropdown Panel */}
+              {/* Mega-Dropdown Menu */}
               {showFeaturesMenu && (
-                <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-[460px] bg-white border border-neutral-200 rounded-xl shadow-xl p-3 z-50 animate-fade-in text-xs">
-                  <div className="px-2 py-1.5 mb-2 border-b border-neutral-100 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                      Procurement Modules & Tooling
-                    </span>
-                    <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded font-medium">
-                      Enterprise Suite
-                    </span>
+                <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-[720px] bg-white border border-neutral-200 rounded-2xl shadow-2xl p-4 z-50 animate-fade-in text-xs ring-1 ring-black/5">
+                  {/* Mega Menu Header */}
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-neutral-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+                        TP
+                      </div>
+                      <div>
+                        <div className="font-bold text-neutral-900 text-xs">
+                          Ethiopian Procurement Intelligence Suite
+                        </div>
+                        <div className="text-[10px] text-neutral-500">
+                          Complete modular tools for tracking, complying, and bidding on 2Merkato & government tenders
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span>Full Suite Active</span>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {featureItems.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = currentView === item.view;
-                      return (
-                        <button
-                          key={item.view}
-                          onClick={() => handleNavClick(item.view)}
-                          className={`p-2 rounded-lg text-left transition-colors flex items-start gap-2.5 ${
-                            isActive
-                              ? 'bg-neutral-900 text-white'
-                              : 'hover:bg-neutral-50 text-neutral-800'
-                          }`}
-                        >
-                          <div
-                            className={`p-1.5 rounded-md shrink-0 mt-0.5 ${
+                  {/* 2-Column Module Grid */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Left Column: Discovery & Pipeline Execution */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                        <Layers className="w-3 h-3 text-neutral-400" />
+                        <span>Discovery & Pipeline Lifecycle</span>
+                      </div>
+                      {discoveryAndPipelineFeatures.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = currentView === item.view;
+                        return (
+                          <button
+                            key={item.view}
+                            onClick={() => handleNavClick(item.view)}
+                            className={`w-full p-2.5 rounded-xl text-left transition-all flex items-start gap-3 border ${
                               isActive
-                                ? 'bg-neutral-800 text-emerald-400'
-                                : 'bg-neutral-100 text-neutral-700'
+                                ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
+                                : 'bg-white hover:bg-neutral-50/90 border-transparent hover:border-neutral-200/80 text-neutral-800'
                             }`}
                           >
-                            <Icon className="w-3.5 h-3.5" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 justify-between">
-                              <span className="font-semibold text-xs truncate">{item.title}</span>
-                              {item.badge && (
-                                <span
-                                  className={`text-[9px] px-1 py-0.2 rounded shrink-0 ${
-                                    isActive ? 'bg-neutral-800 text-neutral-200' : item.badgeColor
-                                  }`}
-                                >
-                                  {item.badge}
-                                </span>
-                              )}
+                            <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${isActive ? 'bg-neutral-800 text-emerald-400' : item.iconBg}`}>
+                              <Icon className="w-4 h-4" />
                             </div>
-                            <p
-                              className={`text-[10px] leading-tight line-clamp-1 mt-0.5 ${
-                                isActive ? 'text-neutral-300' : 'text-neutral-500'
-                              }`}
-                            >
-                              {item.description}
-                            </p>
-                          </div>
-                        </button>
-                      );
-                    })}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1.5">
+                                <span className={`font-semibold text-xs truncate ${isActive ? 'text-white' : 'text-neutral-900'}`}>
+                                  {item.title}
+                                </span>
+                                {item.badge && (
+                                  <span className={`text-[9px] px-1.5 py-0.5 rounded shrink-0 ${
+                                    isActive ? 'bg-neutral-800 text-neutral-200 border border-neutral-700' : item.badgeStyle
+                                  }`}>
+                                    {item.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <div className={`text-[10px] font-medium mt-0.2 ${isActive ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                                {item.subtitle}
+                              </div>
+                              <p className={`text-[10px] leading-tight line-clamp-2 mt-1 ${isActive ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                                {item.description}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right Column: Statutory Compliance & Financial Tools */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                        <ShieldCheck className="w-3 h-3 text-neutral-400" />
+                        <span>Compliance & Financial Risk</span>
+                      </div>
+                      {complianceAndFinanceFeatures.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = currentView === item.view;
+                        return (
+                          <button
+                            key={item.view}
+                            onClick={() => handleNavClick(item.view)}
+                            className={`w-full p-2.5 rounded-xl text-left transition-all flex items-start gap-3 border ${
+                              isActive
+                                ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
+                                : 'bg-white hover:bg-neutral-50/90 border-transparent hover:border-neutral-200/80 text-neutral-800'
+                            }`}
+                          >
+                            <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${isActive ? 'bg-neutral-800 text-emerald-400' : item.iconBg}`}>
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1.5">
+                                <span className={`font-semibold text-xs truncate ${isActive ? 'text-white' : 'text-neutral-900'}`}>
+                                  {item.title}
+                                </span>
+                                {item.badge && (
+                                  <span className={`text-[9px] px-1.5 py-0.5 rounded shrink-0 ${
+                                    isActive ? 'bg-neutral-800 text-neutral-200 border border-neutral-700' : item.badgeStyle
+                                  }`}>
+                                    {item.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <div className={`text-[10px] font-medium mt-0.2 ${isActive ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                                {item.subtitle}
+                              </div>
+                              <p className={`text-[10px] leading-tight line-clamp-2 mt-1 ${isActive ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                                {item.description}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Bottom Utilities Strip inside Dropdown */}
-                  <div className="mt-2.5 pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-600 px-1">
-                    <button
-                      onClick={() => {
-                        setShowFeaturesMenu(false);
-                        onExportCsv();
-                      }}
-                      className="inline-flex items-center gap-1 hover:text-neutral-900 font-medium"
-                    >
-                      <Download className="w-3 h-3 text-neutral-500" />
-                      Export Pipeline CSV
-                    </button>
-                    <a
-                      href="https://tender.2merkato.com/tenders"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 hover:text-neutral-900 font-medium text-neutral-500"
-                    >
-                      <span>2merkato.com Portal</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                  {/* Mega Menu Footer Utilities & Portal Links */}
+                  <div className="mt-3.5 pt-3 border-t border-neutral-100 flex items-center justify-between bg-neutral-50/80 -mx-4 -mb-4 px-4 py-2.5 rounded-b-2xl">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          setShowFeaturesMenu(false);
+                          onExportCsv();
+                        }}
+                        className="inline-flex items-center gap-1.5 text-xs text-neutral-700 hover:text-neutral-950 font-medium transition-colors"
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Export Pipeline CSV</span>
+                      </button>
+                      <span className="text-neutral-300">•</span>
+                      <button
+                        onClick={() => {
+                          setShowFeaturesMenu(false);
+                          onOpenNewBidModal();
+                        }}
+                        className="inline-flex items-center gap-1.5 text-xs text-neutral-700 hover:text-neutral-950 font-medium transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Quick Track Tender</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-3 text-[11px]">
+                      <a
+                        href="https://tender.2merkato.com/tenders"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-neutral-600 hover:text-neutral-950 font-medium transition-colors"
+                      >
+                        <span>2merkato.com</span>
+                        <ArrowUpRight className="w-3 h-3 text-neutral-400" />
+                      </a>
+                      <a
+                        href="https://egp.ppa.gov.et"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-neutral-600 hover:text-neutral-950 font-medium transition-colors"
+                      >
+                        <span>FPPA e-GP</span>
+                        <ArrowUpRight className="w-3 h-3 text-neutral-400" />
+                      </a>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           </nav>
 
-          {/* Section 3: Header Actions & Utilities */}
+          {/* Header Actions & Utilities */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Refresh Live Feed */}
+            {/* Refresh Live Feed (only on feed view) */}
             {currentView === 'feed' && (
               <button
                 onClick={onRefreshFeed}
@@ -408,7 +483,6 @@ export const TopNav: React.FC<TopNavProps> = ({
               </button>
             )}
 
-
             {/* Quick Export CSV Button */}
             <button
               onClick={onExportCsv}
@@ -416,7 +490,7 @@ export const TopNav: React.FC<TopNavProps> = ({
               className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 hover:text-neutral-950 transition-colors whitespace-nowrap"
             >
               <Download className="w-3.5 h-3.5 text-neutral-500" />
-              <span>Export</span>
+              <span>Export CSV</span>
             </button>
 
             {/* User Profile & Auth Menu */}
@@ -428,9 +502,9 @@ export const TopNav: React.FC<TopNavProps> = ({
                   title={`Signed in as ${user.email}`}
                 >
                   {user.photoURL ? (
-                    <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full object-cover" />
+                    <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full object-cover" />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-neutral-900 text-white text-[10px] font-semibold flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-full bg-neutral-900 text-white text-xs font-semibold flex items-center justify-center">
                       {user.email ? user.email.slice(0, 2).toUpperCase() : 'U'}
                     </div>
                   )}
@@ -445,21 +519,11 @@ export const TopNav: React.FC<TopNavProps> = ({
                       <p className="text-[11px] text-neutral-500 truncate">{user.email}</p>
                       <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-mono">
                         <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>Cloud Database Linked</span>
+                        <span>Connected User</span>
                       </div>
                     </div>
 
                     <div className="py-1">
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          onSyncAllToFirebase();
-                        }}
-                        className="w-full text-left px-3 py-2 hover:bg-neutral-50 text-neutral-700 flex items-center gap-2 font-medium"
-                      >
-                        <Database className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Push All Records to Cloud</span>
-                      </button>
                       <button
                         onClick={() => {
                           setShowUserMenu(false);
@@ -491,7 +555,7 @@ export const TopNav: React.FC<TopNavProps> = ({
               <button
                 onClick={signInWithGoogle}
                 disabled={isLoggingIn}
-                title="Sign in with Google to enable real-time Firebase sync"
+                title="Sign in with Google"
                 className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 hover:text-neutral-950 transition-colors whitespace-nowrap shadow-2xs"
               >
                 <LogIn className="w-3.5 h-3.5 text-neutral-500" />
@@ -502,7 +566,7 @@ export const TopNav: React.FC<TopNavProps> = ({
             {/* Primary Action Button: Track Tender */}
             <button
               onClick={onOpenNewBidModal}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-[38px] text-xs font-semibold text-white bg-neutral-900 rounded-md hover:bg-neutral-800 transition-colors whitespace-nowrap shadow-xs active:scale-98"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 min-h-[36px] text-xs font-semibold text-white bg-neutral-900 rounded-md hover:bg-neutral-800 transition-colors whitespace-nowrap shadow-xs active:scale-98"
             >
               <Plus className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
               <span>Track Tender</span>
@@ -526,48 +590,50 @@ export const TopNav: React.FC<TopNavProps> = ({
           {/* Header context */}
           <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
             <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-              Procurement Features & Modules
+              Procurement Features & Modules ({allFeatures.length})
             </span>
-            <div className="flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>Firestore Active</span>
-            </div>
+            <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">
+              Ethiopian Suite
+            </span>
           </div>
 
           {/* Feature List */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {featureItems.map((item) => {
+            {allFeatures.map((item) => {
               const Icon = item.icon;
               const isActive = currentView === item.view;
               return (
                 <button
                   key={item.view}
                   onClick={() => handleNavClick(item.view)}
-                  className={`flex items-center justify-between p-3 rounded-lg text-left transition-colors border ${
+                  className={`flex items-start justify-between p-3 rounded-xl text-left transition-all border ${
                     isActive
-                      ? 'bg-neutral-900 text-white border-neutral-900'
+                      ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
                       : 'bg-neutral-50/80 border-neutral-200/70 text-neutral-800 hover:bg-neutral-100'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
                     <div
-                      className={`p-2 rounded-md ${
-                        isActive ? 'bg-neutral-800 text-emerald-400' : 'bg-white border border-neutral-200 text-neutral-700'
+                      className={`p-2 rounded-lg shrink-0 mt-0.5 ${
+                        isActive ? 'bg-neutral-800 text-emerald-400' : item.iconBg
                       }`}
                     >
                       <Icon className="w-4 h-4" />
                     </div>
-                    <div>
-                      <div className="text-xs font-semibold">{item.title}</div>
-                      <div className={`text-[10px] ${isActive ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold truncate">{item.title}</div>
+                      <div className={`text-[10px] font-medium ${isActive ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                        {item.subtitle}
+                      </div>
+                      <div className={`text-[10px] line-clamp-1 mt-0.5 ${isActive ? 'text-neutral-400' : 'text-neutral-500'}`}>
                         {item.description}
                       </div>
                     </div>
                   </div>
                   {item.badge && (
                     <span
-                      className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                        isActive ? 'bg-neutral-800 text-neutral-200' : item.badgeColor
+                      className={`text-[9px] px-1.5 py-0.5 rounded font-medium shrink-0 ml-2 ${
+                        isActive ? 'bg-neutral-800 text-neutral-200 border border-neutral-700' : item.badgeStyle
                       }`}
                     >
                       {item.badge}
@@ -587,6 +653,17 @@ export const TopNav: React.FC<TopNavProps> = ({
               <button
                 onClick={() => {
                   setShowMobileHeaderMenu(false);
+                  onOpenNewBidModal();
+                }}
+                className="flex items-center justify-center gap-1.5 p-2.5 rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-800 text-xs font-medium hover:bg-neutral-100"
+              >
+                <Plus className="w-3.5 h-3.5 text-neutral-600" />
+                <span>Track Tender</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowMobileHeaderMenu(false);
                   onExportCsv();
                 }}
                 className="flex items-center justify-center gap-1.5 p-2.5 rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-800 text-xs font-medium hover:bg-neutral-100"
@@ -594,21 +671,8 @@ export const TopNav: React.FC<TopNavProps> = ({
                 <Download className="w-3.5 h-3.5 text-neutral-600" />
                 <span>Export CSV</span>
               </button>
-
-              <button
-                onClick={() => {
-                  setShowMobileHeaderMenu(false);
-                  onRefreshFeed();
-                }}
-                disabled={isRefreshing}
-                className="flex items-center justify-center gap-1.5 p-2.5 rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-800 text-xs font-medium hover:bg-neutral-100 disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>Refresh Feed</span>
-              </button>
             </div>
           </div>
-
         </div>
       )}
     </header>
